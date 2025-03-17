@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -16,9 +17,10 @@ class LoginScreen extends StatelessWidget {
     );
 
     if (user != null) {
-      ScaffoldMessenger.of(
+      Navigator.pushReplacement(
         context,
-      ).showSnackBar(SnackBar(content: Text("Login successful!")));
+        MaterialPageRoute(builder: (context) => HomeScreen(user: user)),
+      );
     } else {
       showDialog(
         context: context,
