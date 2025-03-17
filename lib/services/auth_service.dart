@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'logger_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -15,6 +16,10 @@ class AuthService {
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
 
+      // Set displayName in Firebase Auth profile
+      await userCredential.user!.updateDisplayName(username);
+      await userCredential.user!.reload();
+
       // Store additional user details (Username and Email) in Firestore
       await _firestore.collection("users").doc(userCredential.user!.uid).set({
         "username": username,
@@ -23,7 +28,7 @@ class AuthService {
 
       return userCredential.user;
     } catch (e) {
-      print("Sign Up Error: $e");
+      LoggerService.error("Sign Up Error: $e");
       return null;
     }
   }
@@ -45,7 +50,7 @@ class AuthService {
         if (query.docs.isNotEmpty) {
           email = query.docs.first["email"];
         } else {
-          print("No user found with that username.");
+          LoggerService.error("No user found with that username.");
           return null;
         }
       }
@@ -58,7 +63,7 @@ class AuthService {
 
       return userCredential.user;
     } catch (e) {
-      print("Login Error: $e");
+      LoggerService.error("Login Error: $e");
       return null;
     }
   }
@@ -66,5 +71,16 @@ class AuthService {
   // Logout Method
   Future<void> signOut() async {
     await _auth.signOut();
+  }
+
+  // Password Reset Method
+  Future<bool> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      return true;
+    } catch (e) {
+      LoggerService.error("Reset Password Error: $e");
+      return false;
+    }
   }
 }

@@ -8,27 +8,61 @@ class LoginScreen extends StatelessWidget {
   final TextEditingController passwordController = TextEditingController();
   final AuthService _authService = AuthService();
 
+  //Login Method
   void _login(BuildContext context) async {
     User? user = await _authService.loginWithEmailOrUsername(
-      emailController.text.trim(), // Can be either email or username
+      emailController.text.trim(),
       passwordController.text.trim(),
     );
 
     if (user != null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Login successful!")));
+      ).showSnackBar(SnackBar(content: Text("Login successful!")));
+    } else {
+      showDialog(
+        context: context,
+        builder:
+            (_) => AlertDialog(
+              title: Text("Login Error"),
+              content: Text("Invalid email/username or password."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("OK"),
+                ),
+              ],
+            ),
+      );
+    }
+  }
+
+  //Reset Password Method
+  void _resetPassword(BuildContext context) async {
+    final email = emailController.text.trim();
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please enter your email to reset password.")),
+      );
+      return;
+    }
+
+    bool success = await _authService.resetPassword(email);
+
+    if (success) {
+      Navigator.pushNamed(context, '/reset-confirmation');
     } else {
       showDialog(
         context: context,
         builder:
             (context) => AlertDialog(
-              title: const Text("Login Error"),
-              content: const Text("Invalid email/username or password."),
+              title: Text("Error"),
+              content: Text("Failed to send password reset email."),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("OK"),
+                  child: Text("OK"),
                 ),
               ],
             ),
@@ -142,8 +176,8 @@ class LoginScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 15),
                   GestureDetector(
-                    onTap: () {},
-                    child: const Text(
+                    onTap: () => _resetPassword(context),
+                    child: Text(
                       "Forgot your password?",
                       style: TextStyle(
                         color: Colors.black,
@@ -151,6 +185,7 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
