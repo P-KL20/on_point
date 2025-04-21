@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+/// A screen that displays a list of notifications.
+/// Each notification contains a title, body, and timestamp.
+/// The notifications are displayed in a scrollable list.
+/// Unread notifications are highlighted with a red dot.
+
 class NotificationHistoryScreen extends StatelessWidget {
   final List<Map<String, dynamic>> notifications;
 

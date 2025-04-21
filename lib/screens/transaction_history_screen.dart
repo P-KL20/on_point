@@ -5,7 +5,12 @@ import '../services/firestore_service.dart';
 import '../services/transaction_service.dart';
 import '../services/budget_service.dart';
 
+/// A screen that displays the transaction history and allows filtering by bank.
+/// It also shows a summary of income, expenses, and net balance.
+/// The screen can be accessed with an optional category filter.
 class TransactionHistoryScreen extends StatefulWidget {
+  const TransactionHistoryScreen({super.key});
+
   @override
   State<TransactionHistoryScreen> createState() =>
       _TransactionHistoryScreenState();
@@ -73,6 +78,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
+  /// Builds a sticky filter bar for filtering transactions by bank.
   Widget _buildStickyFilterBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -117,6 +123,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
+  /// Builds the transaction list based on the selected bank and category.
   Widget _buildTransactionList(String selectedBank) {
     return StreamBuilder<QuerySnapshot>(
       stream: _firestoreService.getTransactions(),
@@ -186,14 +193,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          ...entry.value
-                              .map(
-                                (doc) => _transactionCard(
-                                  doc.data() as Map<String, dynamic>,
-                                  doc.id,
-                                ),
-                              )
-                              .toList(),
+                          ...entry.value.map(
+                            (doc) => _transactionCard(
+                              doc.data() as Map<String, dynamic>,
+                              doc.id,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -206,6 +211,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
+  /// Builds the summary card for income, expenses, and net balance.
   Widget _summaryCard(double income, double expenses, double net) =>
       _cardWrapper(
         title: '💰 Financial Summary',
@@ -216,6 +222,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         ],
       );
 
+  /// Builds the budget summary card for a specific category.
   Widget _budgetSummaryCard({
     required String category,
     required double spent,
@@ -232,6 +239,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
+  /// A helper method to create a card wrapper with a title and children.
   Widget _cardWrapper({
     required String title,
     required List<Widget> children,
@@ -261,6 +269,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     ),
   );
 
+  /// A helper method to create a row with two text widgets.
   Widget _buildRow(String left, String right) => Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
@@ -278,6 +287,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     ],
   );
 
+  /// Builds a transaction card with details and action buttons.
   Widget _transactionCard(Map<String, dynamic> data, String docId) => Padding(
     padding: const EdgeInsets.only(top: 8.0),
     child: Container(
@@ -324,6 +334,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     ),
   );
 
+  /// Shows a confirmation dialog for deleting a transaction.
   void _showDeleteDialog(String docId) {
     DialogHelper.showConfirmation(
       context: context,
@@ -337,6 +348,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     );
   }
 
+  /// Shows a dialog for editing a transaction's comment.
   void _showEditDialog(Map<String, dynamic> data, String docId) {
     DialogHelper.showEditComment(
       context: context,

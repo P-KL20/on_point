@@ -14,9 +14,11 @@ import 'screens/notification_history_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'routes.dart';
 
+/// Import the Firebase Firestore package
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
+/// This is the main entry point of the application
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -25,6 +27,7 @@ Future<void> main() async {
   runApp(MyApp());
 }
 
+/// This function initializes the local notifications plugin
 Future<void> _initializeLocalNotifications() async {
   const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
     requestAlertPermission: true,
@@ -39,8 +42,11 @@ Future<void> _initializeLocalNotifications() async {
   await flutterLocalNotificationsPlugin.initialize(initSettings);
 }
 
-/// This is the main entry point of the application
+/// This is the main widget of the application
+/// It sets up the MaterialApp with routes and themes
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

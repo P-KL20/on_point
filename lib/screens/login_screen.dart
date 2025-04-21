@@ -5,10 +5,14 @@ import 'signup_screen.dart';
 import '../routes.dart';
 import '../utils/dialog_helper.dart';
 
+/// A screen for user login.
+/// It allows users to log in using their email or username and password.
 class LoginScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final AuthService _authService = AuthService();
+
+  LoginScreen({super.key});
 
   void _login(BuildContext context) async {
     User? user = await _authService.loginWithEmailOrUsername(
@@ -23,6 +27,7 @@ class LoginScreen extends StatelessWidget {
     }
   }
 
+  /// Shows a dialog for password reset.
   void _showResetDialog(BuildContext context) {
     final TextEditingController emailResetController = TextEditingController();
 
@@ -70,6 +75,7 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
+  /// Builds the login screen UI.
   @override
   Widget build(BuildContext context) {
     return Scaffold(

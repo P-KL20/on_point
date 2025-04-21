@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 
-// This service handles budget-related operations, including validation and saving budgets.
+/// The BudgetService class is responsible for managing budget-related
+/// functionalities, including fetching budget values, validating custom
+/// category names, and saving budgets to Firestore.
+/// It provides methods to normalize category names, validate custom
+/// category names against existing ones, and validate and save budgets.
+/// It also provides methods to calculate the total budget from
+/// amount controllers and check if a budget exists for a specified month.
 class BudgetService {
   final FirestoreService _firestoreService = FirestoreService();
   static const double defaultBudgetLimit =
@@ -123,6 +129,7 @@ class BudgetService {
     });
   }
 
+  // Checks if a budget exists for the specified month.
   Future<bool> checkIfBudgetExists(String targetMonth) async {
     final parts = targetMonth.split('-');
     final year = int.parse(parts[0]);

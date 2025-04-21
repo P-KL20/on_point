@@ -1,3 +1,4 @@
+// This file contains the route names used in the application.
 class RouteNames {
   static const String login = '/';
   static const String signup = '/signup';

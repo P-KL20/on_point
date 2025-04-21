@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import '../routes.dart';
 
+/// A screen that confirms the password reset request.
+
 class ResetConfirmationScreen extends StatelessWidget {
+  const ResetConfirmationScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

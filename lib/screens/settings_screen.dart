@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../routes.dart';
 import '../utils/dialog_helper.dart';
 
+/// A screen that displays the settings and user profile information.
+/// It allows the user to log out and view their profile information.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -22,6 +24,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  /// Builds the settings screen UI.
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;

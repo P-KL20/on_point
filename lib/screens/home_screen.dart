@@ -10,6 +10,12 @@ import 'transaction_history_screen.dart';
 import 'budget_overview_screen.dart';
 import '../models/overspent_alert.dart';
 
+/// HomeScreen is the main screen of the app, displaying a dashboard with
+/// account balances, recent transactions, and alerts.
+/// It allows users to navigate to different sections of the app using a
+/// bottom navigation bar.
+/// It also fetches and displays notifications and alerts related to
+/// overspending in different categories.
 class HomeScreen extends StatefulWidget {
   final User user;
 
@@ -35,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUnreadCount();
   }
 
+  /// Fetch the unread notification count when the screen is initialized
   void _loadUnreadCount() async {
     final count = await _notifService.fetchUnreadCount();
     setState(() {
@@ -42,12 +49,14 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  /// Handle bottom navigation bar item taps
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
+  /// Build the body of the screen based on the selected index
   Widget _buildBody() {
     switch (_selectedIndex) {
       case 0:
@@ -63,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Build the app bar with a title and action buttons
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.lightBlue[200],
@@ -130,6 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Build the home dashboard with account balances, recent transactions,
   Widget _homeDashboard() {
     return FutureBuilder(
       future: _homeService.getDashboardData(),
@@ -184,6 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Build the section header with a title
   Widget _sectionHeader(String title) => Padding(
     padding: const EdgeInsets.only(bottom: 8),
     child: Text(
@@ -196,12 +208,14 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   );
 
+  /// Build the total balance card with the total balance amount
   Widget _totalBalanceCard(double balance) => _simpleCard(
     title: '🔢 Total Balance',
     content: '\$${balance.toStringAsFixed(2)}',
     textStyle: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
   );
 
+  /// Build the grouped bank cards with account balances and sparkline charts
   Widget _groupedBankCards(
     Map<String, double> balances,
     Map<String, List<double>> sparklineData,
@@ -227,6 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }).toList(),
   );
 
+  /// Build the sparkline chart for account balances
   Widget _sparkline(List<double> values) {
     return SizedBox(
       height: 30,
@@ -253,6 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Build the recent transactions card with a list of recent transactions
   Widget _recentTransactionCard(List<QueryDocumentSnapshot> docs) =>
       _simpleCard(
         title: '💸 Recent Transactions',
@@ -276,6 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
 
+  /// Get the color based on the severity of overspending
   Color _getSeverityColor(double percent) {
     if (percent >= 2.0) {
       return Colors.red.shade700; // Critical
@@ -288,6 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Get the label based on the severity of overspending
   String _getSeverityLabel(double percent) {
     if (percent >= 2.0) return 'Critical Overspending';
     if (percent >= 1.5) return 'High Overspending';
@@ -295,6 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'Mild Overspending';
   }
 
+  /// Build the overspending alert widget
   Widget _overBudgetAlert(OverspentAlert alert) {
     Color bgColor = _getSeverityColor(alert.percent);
 
@@ -360,6 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Build the rollover banner widget
   Widget _rolloverBanner(int daysLeft) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -372,6 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Build a simple card widget with a title and content
   Widget _simpleCard({
     required String title,
     String? content,
@@ -409,6 +430,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Build the main widget tree
   @override
   Widget build(BuildContext context) {
     return Scaffold(

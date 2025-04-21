@@ -3,6 +3,10 @@ import 'package:intl/intl.dart';
 import '../services/budget_service.dart';
 import '../utils/dialog_helper.dart';
 
+// A screen for creating a budget.
+// It allows users to set a budget limit, add standard and custom categories,
+// and save the budget for a specific month.
+// The screen also provides a summary of the total budget and remaining amount.
 class CreateBudgetScreen extends StatefulWidget {
   const CreateBudgetScreen({super.key});
 
@@ -50,6 +54,7 @@ class _CreateBudgetScreenState extends State<CreateBudgetScreen> {
     }
   }
 
+  // Recalculates the total budget based on the current values in the amount controllers.
   void _recalculateTotal() {
     final total = _budgetService.calculateCurrentTotal(
       amountControllers: _amountControllers,
@@ -59,6 +64,7 @@ class _CreateBudgetScreenState extends State<CreateBudgetScreen> {
     });
   }
 
+  // Shows a dialog to add a custom category.
   Future<void> _showAddCategoryDialog() async {
     final nameController = TextEditingController();
     final amountController = TextEditingController(text: "0");
@@ -161,6 +167,7 @@ class _CreateBudgetScreenState extends State<CreateBudgetScreen> {
     );
   }
 
+  // Removes a custom category at the specified index.
   void _removeCustomCategory(int index) {
     setState(() {
       _customControllers.removeAt(index);
@@ -169,6 +176,7 @@ class _CreateBudgetScreenState extends State<CreateBudgetScreen> {
     _recalculateTotal();
   }
 
+  // Saves the budget after validating the inputs.
   void _saveBudget() async {
     setState(() => _saving = true);
 
@@ -202,6 +210,7 @@ class _CreateBudgetScreenState extends State<CreateBudgetScreen> {
     Navigator.pop(context, targetMonth);
   }
 
+  // Builds a budget input field with a slider for adjusting the amount.
   Widget _buildBudgetInputWithSlider(
     String label,
     TextEditingController controller,
@@ -238,6 +247,7 @@ class _CreateBudgetScreenState extends State<CreateBudgetScreen> {
     );
   }
 
+  // Builds a sticky footer summary showing the total budget and remaining amount.
   Widget _buildStickyFooterSummary() {
     final remaining = _budgetLimit - _totalBudget;
     final color =
@@ -273,6 +283,7 @@ class _CreateBudgetScreenState extends State<CreateBudgetScreen> {
     );
   }
 
+  // Builds the main UI of the screen.
   @override
   Widget build(BuildContext context) {
     return Scaffold(

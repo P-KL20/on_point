@@ -12,6 +12,8 @@ class SignupScreen extends StatelessWidget {
   final TextEditingController passwordController = TextEditingController();
   final AuthService _authService = AuthService();
 
+  SignupScreen({super.key});
+
   // This method is called when the user taps the sign-up button
   void _signUp(BuildContext context) async {
     User? user = await _authService.signUpWithEmail(

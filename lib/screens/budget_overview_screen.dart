@@ -6,6 +6,10 @@ import '../routes.dart';
 import '../services/firestore_service.dart';
 import '../utils/dialog_helper.dart';
 
+/// A screen that provides an overview of the user's budget.
+/// It displays the budget categories, spending trends, and allows the user
+/// to select a month to view the budget for that month.
+/// The screen also provides options to create a new budget, delete an existing budget.
 class BudgetOverviewScreen extends StatefulWidget {
   const BudgetOverviewScreen({super.key});
 
@@ -13,6 +17,7 @@ class BudgetOverviewScreen extends StatefulWidget {
   State<BudgetOverviewScreen> createState() => _BudgetOverviewScreenState();
 }
 
+// The state for the BudgetOverviewScreen.
 class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final List<Color> chartColors = [
@@ -69,18 +74,21 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     });
   }
 
+  // Check if the selected month is the current month
   bool _isCurrentMonth() {
     final now = DateTime.now();
     final selected = DateTime.parse('$selectedMonth-01');
     return selected.year == now.year && selected.month == now.month;
   }
 
+  // Check if the selected month is in the past
   bool _isPastMonth() {
     final now = DateTime.now();
     final selected = DateTime.parse('$selectedMonth-01');
     return selected.isBefore(DateTime(now.year, now.month));
   }
 
+  // Check if the selected month is in the future and has a budget set
   bool _isFutureMonthWithBudget() {
     final now = DateTime.now();
     final selected = DateTime.parse('$selectedMonth-01');
@@ -88,6 +96,7 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
         budgetData.isNotEmpty;
   }
 
+  // Build the month selector dropdown
   Widget _buildMonthSelector() {
     final now = DateTime.now();
     final months = List.generate(
@@ -130,6 +139,7 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     );
   }
 
+  // Build the top category card
   Widget _buildTopCategory() {
     if (spentData.isEmpty) return const SizedBox();
     final top = spentData.entries.reduce((a, b) => a.value > b.value ? a : b);
@@ -158,6 +168,7 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     );
   }
 
+  // Build the pie chart card
   Widget _buildPieChart() {
     final entries = spentData.entries.toList();
     if (entries.isEmpty) return const SizedBox();
@@ -191,6 +202,7 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     );
   }
 
+  // Show the pie chart modal
   void _showPieChartModal(BuildContext context) {
     final total = spentData.values.fold(0.0, (a, b) => a + b);
     final entries = spentData.entries.toList();
@@ -275,6 +287,7 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     );
   }
 
+  // Build the spending trend card
   Widget _buildSpendingTrend() {
     if (monthlyTrends.isEmpty) return const SizedBox();
 
@@ -314,6 +327,7 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     );
   }
 
+  // Show the spending trend modal
   void _showSpendingTrendModal(BuildContext context) {
     final months = monthlyTrends.keys.toList()..sort();
     final values = months.map((m) => monthlyTrends[m]!).toList();
@@ -420,6 +434,7 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     );
   }
 
+  // Build the monthly trend details
   Widget _buildMonthlyTrendDetails(List<String> months, List<double> values) {
     return Column(
       children: List.generate(months.length, (i) {
@@ -509,10 +524,11 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     );
   }
 
+  // Build the single month category card
   Widget _buildSingleMonthCategoryCard() {
     if (budgetData.isEmpty) return const SizedBox();
 
-    final monthDate = DateTime.parse('${selectedMonth}-01');
+    final monthDate = DateTime.parse('$selectedMonth-01');
     final monthLabel = DateFormat('MMMM yyyy').format(monthDate);
 
     return _cardWrapper(
@@ -531,6 +547,7 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     );
   }
 
+  // Build the card wrapper
   Widget _cardWrapper({
     required String title,
     required List<Widget> children,
@@ -560,6 +577,7 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     ),
   );
 
+  // Build the expandable category card
   Widget _buildExpandableCategory(String category, double spent, double limit) {
     final percent = (spent / limit).clamp(0.0, 1.0);
     final overLimit = spent > limit;
@@ -650,6 +668,7 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     );
   }
 
+  // Build the delete budget button
   Widget _buildDeleteButton() {
     return ElevatedButton.icon(
       onPressed: () async {
@@ -690,6 +709,7 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     );
   }
 
+  // Build the rollover banner
   Widget _buildRolloverBanner() {
     final now = DateTime.now();
     final daysLeft =
@@ -708,6 +728,7 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen> {
     );
   }
 
+  // Build the entire screen
   @override
   Widget build(BuildContext context) {
     return Scaffold(

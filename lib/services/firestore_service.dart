@@ -1,6 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+/// The FirestoreService class is responsible for managing Firestore
+/// interactions related to user transactions and budgets.
+/// It provides methods to add, update, delete, and retrieve transactions,
+/// as well as to calculate account balances and category expenses.
+/// It also provides methods to manage budgets, including saving,
+/// retrieving, and deleting budgets for specific months.
+/// The class uses the FirebaseFirestore instance to perform
+/// CRUD operations on the Firestore database.
+/// It also provides methods to get bank balances over time and
+/// to check if a budget exists for a specific month.
+/// The class is designed to be used in conjunction with the
+/// Firebase Authentication service to manage user-specific data.
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String uid = FirebaseAuth.instance.currentUser!.uid;
@@ -30,6 +42,7 @@ class FirestoreService {
     });
   }
 
+  // Calculate account balances based on transactions
   Future<Map<String, double>> calculateAccountBalances() async {
     final Map<String, double> balances = {};
     final snapshot =
@@ -74,7 +87,7 @@ class FirestoreService {
     return balances;
   }
 
-  // Updated: Calculate expenses grouped by user-defined budget category
+  // Calculate expenses grouped by user-defined budget category
   Future<Map<String, double>> calculateCategoryExpenses() async {
     final snapshot =
         await _db.collection('users').doc(uid).collection('transactions').get();
@@ -100,7 +113,7 @@ class FirestoreService {
     return totals;
   }
 
-  // Updated: Calculate category expenses by user-defined category (for a month)
+  // Calculate category expenses by user-defined category (for a month)
   Future<Map<String, double>> calculateCategoryExpensesByMonth(
     int year,
     int month,
@@ -142,6 +155,7 @@ class FirestoreService {
     return totals;
   }
 
+  // Calculate category expenses by user-defined category (for a month)
   Future<Map<String, double>> getSavedBudgets() async {
     final now = DateTime.now();
     final doc =
@@ -165,6 +179,7 @@ class FirestoreService {
     return parsed;
   }
 
+  // Save budget data for a specific month
   Future<void> saveBudget(
     Map<String, double> budgetData,
     String targetMonth,
@@ -186,6 +201,7 @@ class FirestoreService {
         });
   }
 
+  // Get saved budgets for a specific month
   Future<Map<String, double>> getSavedBudgetsByMonth(
     int year,
     int month,
@@ -211,6 +227,7 @@ class FirestoreService {
     return parsed;
   }
 
+  // Check if a budget exists for a specific month
   Future<bool> isMonthBudgetSet(int year, int month) async {
     final docId = buildMonthKey(year, month);
     final doc =
@@ -223,6 +240,7 @@ class FirestoreService {
     return doc.exists;
   }
 
+  // Delete a budget for a specific month
   Future<void> deleteBudgetByMonth(int year, int month) async {
     final docId = buildMonthKey(year, month);
     await _db
@@ -233,6 +251,7 @@ class FirestoreService {
         .delete();
   }
 
+  // Get monthly spending trends
   Future<Map<String, double>> getMonthlySpendingTrends() async {
     final snapshot =
         await _db.collection('users').doc(uid).collection('transactions').get();
@@ -261,6 +280,7 @@ class FirestoreService {
     return monthlyTotals;
   }
 
+  // Get monthly spending trends for a specific month
   Future<bool> isCurrentMonthBudgetSet() async {
     final now = DateTime.now();
     final docId = buildMonthKey(now.year, now.month);
@@ -274,6 +294,7 @@ class FirestoreService {
     return doc.exists;
   }
 
+  // Delete the current month's budget
   Future<void> deleteBudget() async {
     final now = DateTime.now();
     final docId = buildMonthKey(now.year, now.month);
@@ -285,6 +306,7 @@ class FirestoreService {
         .delete();
   }
 
+  // Get all transactions for the authenticated user
   Stream<QuerySnapshot> getTransactions() {
     return _db
         .collection('users')
@@ -294,6 +316,7 @@ class FirestoreService {
         .snapshots();
   }
 
+  // Get a specific transaction by document ID
   Future<void> updateTransaction(
     String docId,
     Map<String, dynamic> data,
@@ -306,6 +329,7 @@ class FirestoreService {
         .update(data);
   }
 
+  // Delete a specific transaction by document ID
   Future<void> deleteTransaction(String docId) async {
     await _db
         .collection('users')
@@ -315,6 +339,7 @@ class FirestoreService {
         .delete();
   }
 
+  // Get bank balances over time
   Future<Map<String, List<double>>> getBankBalancesOverTime() async {
     final snapshot =
         await _db

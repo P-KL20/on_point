@@ -3,6 +3,15 @@ import 'firestore_service.dart';
 import '../models/overspent_alert.dart';
 import 'notification_service.dart';
 
+/// The HomeService class is responsible for managing the home screen data,
+/// including fetching dashboard data, calculating balances, and managing
+/// notifications related to overspending and budget warnings.
+/// It interacts with the FirestoreService to retrieve data from Firestore
+/// and the NotificationService to handle notifications.
+/// It provides methods to get dashboard data, calculate total balances,
+/// get recent transactions, and manage overspending alerts.
+/// It also provides methods to get the number of days left in the current
+/// month and to clean up old notifications.
 class HomeService {
   final FirestoreService _firestoreService = FirestoreService();
   final NotificationService _notificationService = NotificationService();
@@ -25,19 +34,23 @@ class HomeService {
     };
   }
 
+  /// This method calculates the number of days left in the current month.
   int getRolloverDaysLeft() {
     final now = DateTime.now();
     return DateTime(now.year, now.month + 1, 1).difference(now).inDays;
   }
 
+  /// This method calculates the total balance from the provided map of balances.
   double calculateTotalBalance(Map<String, double> balances) {
     return balances.values.fold(0.0, (a, b) => a + b);
   }
 
+  /// This method retrieves the recent transactions from the Firestore snapshot.
   List<QueryDocumentSnapshot> getRecentTransactions(QuerySnapshot snapshot) {
     return snapshot.docs.take(5).toList();
   }
 
+  /// This method retrieves the bank balances over time for the sparkline chart.
   Future<List<OverspentAlert>> getActualOverspentCategories() async {
     final now = DateTime.now();
     final year = now.year;
@@ -92,10 +105,12 @@ class HomeService {
     return overspent;
   }
 
+  /// This method retrieves the recent transactions from the Firestore snapshot.
   Future<List<Map<String, dynamic>>> getNotificationHistory() async {
     return await _notificationService.getNotificationHistory();
   }
 
+  /// This method retrieves the number of days left in the current month.
   Future<void> cleanupOldNotifications({int days = 60}) async {
     return await _notificationService.cleanupOldNotifications(days: days);
   }

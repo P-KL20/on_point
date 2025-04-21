@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 import '../services/transaction_service.dart';
 
+// A screen for inputting budget-related transactions.
+// This screen allows users to log various types of transactions, including deposits, withdrawals, transfers, and more.
 class BudgetInputScreen extends StatefulWidget {
   const BudgetInputScreen({super.key});
 
@@ -57,6 +59,7 @@ class _BudgetInputScreenState extends State<BudgetInputScreen> {
     }
   }
 
+  // A method to show a dialog with a message.
   Widget _buildDropdown(
     String label,
     String? value,
@@ -83,6 +86,7 @@ class _BudgetInputScreenState extends State<BudgetInputScreen> {
     );
   }
 
+  // A method to build a text field with a label and controller.
   Widget _buildTextField(
     String label,
     TextEditingController controller, {
@@ -110,6 +114,7 @@ class _BudgetInputScreenState extends State<BudgetInputScreen> {
     );
   }
 
+  // A method to build the transfer section of the form.
   Widget _buildTransferSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,6 +140,7 @@ class _BudgetInputScreenState extends State<BudgetInputScreen> {
     );
   }
 
+  // A method to build the submit button.
   Widget _buildSubmitButton() {
     return ElevatedButton(
       onPressed: () async {
@@ -189,6 +195,7 @@ class _BudgetInputScreenState extends State<BudgetInputScreen> {
     );
   }
 
+  // Log a transaction
   @override
   Widget build(BuildContext context) {
     return Scaffold(

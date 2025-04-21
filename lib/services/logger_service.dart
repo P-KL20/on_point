@@ -1,5 +1,10 @@
 import 'package:logger/logger.dart';
 
+/// A service for logging messages with different severity levels.
+/// This service uses the [Logger] package to provide a simple interface
+/// for logging messages. It supports different log levels such as debug,
+/// info, warning, and error. The log messages are printed to the console
+/// with the corresponding log level.
 class LoggerService {
   static final Logger _logger = Logger();
 

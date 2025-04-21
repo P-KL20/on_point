@@ -2,6 +2,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'firestore_service.dart';
 
+/// This is a service class for managing transactions in a Flutter app.
+/// It provides methods to filter transactions, calculate summaries,
+/// group transactions by month, and validate and process transactions.
+/// It uses Firestore to store and retrieve transaction data.
+/// The class includes methods to filter transactions by bank and category,
+/// calculate total income and expenses, and group transactions by month.
+/// It also includes a method to validate and process transactions,
+/// ensuring that all required fields are filled and that there are sufficient funds
+/// for withdrawal or transfer transactions.
+/// The class handles different transaction types, including deposits, withdrawals,
+/// transfers, and various payment types.
+/// It also includes error handling for invalid inputs and insufficient funds.
+/// The class uses the FirestoreService to interact with Firestore for adding transactions
+/// and calculating account balances.
 class TransactionService {
   final FirestoreService _firestoreService = FirestoreService();
 

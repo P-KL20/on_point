@@ -2,8 +2,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+// This is a service class for managing notifications in a Flutter app.
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+
+// This class handles adding, fetching, and cleaning up notifications.
+// It uses Firebase Firestore to store notifications and Firebase Auth to get the current user's ID.
+// It also uses the flutter_local_notifications package to show local notifications.
+// The class provides methods to add notifications for overspending and budget warnings,
+// fetch unread notification counts, get notification history, and clean up old notifications.
+// It also includes a method to show local notifications.
+// The notifications are categorized by type (budget_exceeded, budget_warning) and can be filtered by category and monthKey.
+// The notifications are stored in a sub-collection under the user's document in Firestore.
+// The class ensures that duplicate notifications are not added by checking for existing notifications with the same category and monthKey.
+// The notifications are marked as read when they are fetched, and old notifications can be cleaned up based on a specified number of days.
 
 class NotificationService {
   final _auth = FirebaseAuth.instance;
@@ -49,6 +61,7 @@ class NotificationService {
     }
   }
 
+  /// Adds a budget warning notification if the user has spent 80% of their budget.
   Future<void> addBudgetWarningNotification({
     required String category,
     required double spent,
@@ -89,6 +102,7 @@ class NotificationService {
     }
   }
 
+  /// Shows a local notification with the given title and body.
   Future<void> _showLocalNotification({
     required String title,
     required String body,
@@ -101,6 +115,7 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.show(0, title, body, platformDetails);
   }
 
+  /// Fetches the count of unread notifications for the current user.
   Future<int> getUnreadNotificationCount() async {
     final uid = _auth.currentUser!.uid;
     final snapshot =
@@ -114,6 +129,7 @@ class NotificationService {
     return snapshot.size;
   }
 
+  /// Fetches the notification history for the current user.
   Future<List<Map<String, dynamic>>> getNotificationHistory() async {
     final uid = _auth.currentUser!.uid;
     final notifRef = _firestore
@@ -133,6 +149,7 @@ class NotificationService {
     return snapshot.docs.map((doc) => doc.data()).toList();
   }
 
+  /// Cleans up old notifications older than the specified number of days.
   Future<void> cleanupOldNotifications({int days = 60}) async {
     final uid = _auth.currentUser!.uid;
     final cutoff = DateTime.now().subtract(Duration(days: days));
@@ -150,6 +167,7 @@ class NotificationService {
     }
   }
 
+  /// Fetches the count of unread notifications for the current user.
   Future<int> fetchUnreadCount() async {
     final uid = _auth.currentUser!.uid;
     final snapshot =

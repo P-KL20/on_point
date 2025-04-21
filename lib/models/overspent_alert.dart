@@ -1,3 +1,5 @@
+// This file defines the OverspentAlert class, which represents an alert for overspending in a specific category.
+// It includes properties for the category name, amount spent, limit, and percentage of the limit that has been spent.
 class OverspentAlert {
   final String category;
   final double spent;

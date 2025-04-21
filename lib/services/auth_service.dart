@@ -2,6 +2,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'logger_service.dart';
 
+/// The AuthService class is responsible for managing user authentication
+/// functionalities, including signing up, logging in, logging out,
+/// and resetting passwords.
+/// It uses Firebase Authentication for user management and Firestore
+/// for storing additional user details.
+/// It provides methods to sign up with email and password, log in
+/// with either email or username, log out, and reset passwords.
+/// It also handles errors and logs them using the LoggerService.
+/// The class is designed to be reusable and can be easily integrated
+/// into any Flutter application that requires user authentication.
+
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

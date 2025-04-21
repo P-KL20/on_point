@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+/// This is a utility class for showing styled dialogs and snackbars in a Flutter app.
+/// It provides methods to show error and success dialogs, confirmation dialogs,
+/// and passive snackbars. The dialogs are styled with rounded corners and custom colors.
+/// The class also includes a method to show an edit comment dialog with a text field.
 class DialogHelper {
   /// Shows a styled error dialog with red accent
   static void showError(BuildContext context, String message) {
