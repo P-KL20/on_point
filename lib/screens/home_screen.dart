@@ -1,73 +1,423 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fl_chart/fl_chart.dart';
+import '../../services/home_service.dart';
+import '../../services/notification_service.dart';
+import '../routes.dart';
+import 'budget_input_screen.dart';
+import 'transaction_history_screen.dart';
+import 'budget_overview_screen.dart';
+import '../models/overspent_alert.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final User user;
 
-  HomeScreen({required this.user});
+  const HomeScreen({super.key, required this.user});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final HomeService _homeService = HomeService();
+  final NotificationService _notifService = NotificationService();
+
+  bool showAllAlerts = false;
+  int _selectedIndex = 0;
+  int _unreadCount = 0;
+  List<OverspentAlert> visibleAlerts(List<OverspentAlert> topOverspent) =>
+      showAllAlerts ? topOverspent : topOverspent.take(3).toList();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnreadCount();
+  }
+
+  void _loadUnreadCount() async {
+    final count = await _notifService.fetchUnreadCount();
+    setState(() {
+      _unreadCount = count;
+    });
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  Widget _buildBody() {
+    switch (_selectedIndex) {
+      case 0:
+        return _homeDashboard();
+      case 1:
+        return const BudgetInputScreen();
+      case 2:
+        return TransactionHistoryScreen();
+      case 3:
+        return const BudgetOverviewScreen();
+      default:
+        return _homeDashboard();
+    }
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.lightBlue[200],
+      elevation: 0,
+      title:
+          _selectedIndex == 0
+              ? Text(
+                'Welcome, ${widget.user.displayName ?? "User"}!',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                ),
+              )
+              : const Text(''),
+      actions: [
+        Stack(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () async {
+                final history = await _homeService.getNotificationHistory();
+                Navigator.pushNamed(
+                  context,
+                  RouteNames.notifications,
+                  arguments: history,
+                );
+                _loadUnreadCount();
+              },
+            ),
+            if (_unreadCount > 0)
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$_unreadCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        IconButton(
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: () {
+            Navigator.pushNamed(context, RouteNames.settings);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _homeDashboard() {
+    return FutureBuilder(
+      future: _homeService.getDashboardData(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final data = snapshot.data as Map<String, dynamic>;
+        final balances = data['balances'] as Map<String, double>;
+        final transactions = data['transactions'] as QuerySnapshot;
+        final sparklineData =
+            data['sparklineData'] as Map<String, List<double>>;
+        final totalBalance = _homeService.calculateTotalBalance(balances);
+        final sortedTransactions = _homeService.getRecentTransactions(
+          transactions,
+        );
+        final topOverspent = data['overspent'] as List<OverspentAlert>;
+        final daysLeft = _homeService.getRolloverDaysLeft();
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _sectionHeader('Summary'),
+            _totalBalanceCard(totalBalance),
+            const SizedBox(height: 16),
+            _sectionHeader('Accounts'),
+            _groupedBankCards(balances, sparklineData),
+            const SizedBox(height: 16),
+            _sectionHeader('Recent Activity'),
+            _recentTransactionCard(sortedTransactions),
+            const SizedBox(height: 16),
+            if (topOverspent.isNotEmpty) ...[
+              _sectionHeader('Alerts'),
+              for (final alert in visibleAlerts(topOverspent))
+                _overBudgetAlert(alert),
+              if (topOverspent.length > 3)
+                TextButton(
+                  onPressed:
+                      () => setState(() => showAllAlerts = !showAllAlerts),
+                  child: Text(
+                    showAllAlerts ? 'Hide Extra Alerts' : 'View All Alerts',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
+            const SizedBox(height: 12),
+            _rolloverBanner(daysLeft),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _sectionHeader(String title) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(
+      title,
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Colors.black54,
+      ),
+    ),
+  );
+
+  Widget _totalBalanceCard(double balance) => _simpleCard(
+    title: '🔢 Total Balance',
+    content: '\$${balance.toStringAsFixed(2)}',
+    textStyle: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+  );
+
+  Widget _groupedBankCards(
+    Map<String, double> balances,
+    Map<String, List<double>> sparklineData,
+  ) => GridView.count(
+    physics: const NeverScrollableScrollPhysics(),
+    crossAxisCount: 2,
+    shrinkWrap: true,
+    crossAxisSpacing: 12,
+    mainAxisSpacing: 12,
+    children:
+        balances.entries.map((entry) {
+          final sparkValues = sparklineData[entry.key] ?? [];
+          return _simpleCard(
+            title: entry.key,
+            contentWidget: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('\$${entry.value.toStringAsFixed(2)}'),
+                if (sparkValues.isNotEmpty) _sparkline(sparkValues),
+              ],
+            ),
+          );
+        }).toList(),
+  );
+
+  Widget _sparkline(List<double> values) {
+    return SizedBox(
+      height: 30,
+      child: LineChart(
+        LineChartData(
+          lineBarsData: [
+            LineChartBarData(
+              spots: List.generate(
+                values.length,
+                (i) => FlSpot(i.toDouble(), values[i]),
+              ),
+              isCurved: true,
+              color: Colors.teal,
+              barWidth: 2,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(show: false),
+            ),
+          ],
+          titlesData: FlTitlesData(show: false),
+          borderData: FlBorderData(show: false),
+          gridData: FlGridData(show: false),
+        ),
+      ),
+    );
+  }
+
+  Widget _recentTransactionCard(List<QueryDocumentSnapshot> docs) =>
+      _simpleCard(
+        title: '💸 Recent Transactions',
+        contentWidget: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var doc in docs)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(
+                  '${doc['transactionType']} - \$${doc['amount']}',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            TextButton(
+              onPressed:
+                  () => Navigator.pushNamed(context, RouteNames.transactions),
+              child: const Text('View All'),
+            ),
+          ],
+        ),
+      );
+
+  Color _getSeverityColor(double percent) {
+    if (percent >= 2.0) {
+      return Colors.red.shade700; // Critical
+    } else if (percent >= 1.5) {
+      return Colors.redAccent; // High
+    } else if (percent >= 1.2) {
+      return Colors.deepOrangeAccent; // Moderate
+    } else {
+      return Colors.orangeAccent; // Mild
+    }
+  }
+
+  String _getSeverityLabel(double percent) {
+    if (percent >= 2.0) return 'Critical Overspending';
+    if (percent >= 1.5) return 'High Overspending';
+    if (percent >= 1.2) return 'Moderate Overspending';
+    return 'Mild Overspending';
+  }
+
+  Widget _overBudgetAlert(OverspentAlert alert) {
+    Color bgColor = _getSeverityColor(alert.percent);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: Colors.white,
+            size: 28,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'You’ve overspent on ${alert.category}!',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '\$${alert.spent.toStringAsFixed(2)} / \$${alert.limit.toStringAsFixed(2)}',
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _getSeverityLabel(alert.percent), // 💡 This is the new line
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.zero,
+                  ),
+                  onPressed:
+                      () => Navigator.pushNamed(
+                        context,
+                        RouteNames.budgetOverview,
+                      ),
+                  child: const Text('View in Stats'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _rolloverBanner(int daysLeft) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: Colors.blueGrey[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text('🔁 Your categories will roll over in $daysLeft days'),
+    );
+  }
+
+  Widget _simpleCard({
+    required String title,
+    String? content,
+    TextStyle? textStyle,
+    Widget? contentWidget,
+    Color color = Colors.white,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          if (contentWidget != null)
+            contentWidget
+          else if (content != null)
+            Text(content, style: textStyle),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.lightBlue[100],
-      appBar: AppBar(
-        backgroundColor: Colors.lightBlue[200],
-        elevation: 0,
-        title: Text(
-          'Welcome, ${user.displayName ?? "User"}!',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // Notification screen logic
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              // Settings screen logic
-            },
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Expanded(
-              flex: 2,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                // Here will be the user's main financial summary widget
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              flex: 3,
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                children: List.generate(4, (index) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    // Each container can be filled with relevant financial info
-                  );
-                }),
-              ),
-            ),
-          ],
-        ),
-      ),
+      appBar: _buildAppBar(),
+      body: _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
         selectedItemColor: Colors.black,
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,

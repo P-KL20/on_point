@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
-import 'login_screen.dart';
+import '../routes.dart';
+import '../utils/dialog_helper.dart';
 
 class SignupScreen extends StatelessWidget {
   final TextEditingController firstNameController = TextEditingController();
@@ -11,6 +12,7 @@ class SignupScreen extends StatelessWidget {
   final TextEditingController passwordController = TextEditingController();
   final AuthService _authService = AuthService();
 
+  // This method is called when the user taps the sign-up button
   void _signUp(BuildContext context) async {
     User? user = await _authService.signUpWithEmail(
       emailController.text.trim(),
@@ -19,31 +21,14 @@ class SignupScreen extends StatelessWidget {
     );
 
     if (user != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Account created successfully!")),
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
-      );
+      DialogHelper.showSuccess(context, "Account created successfully!");
+      Navigator.pushReplacementNamed(context, RouteNames.login);
     } else {
-      showDialog(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text("Signup Error"),
-              content: const Text("Failed to create an account."),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("OK"),
-                ),
-              ],
-            ),
-      );
+      DialogHelper.showError(context, "Failed to create an account.");
     }
   }
 
+  // This method is called when the widget is disposed
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -176,10 +161,7 @@ class SignupScreen extends StatelessWidget {
                 const SizedBox(width: 5),
                 GestureDetector(
                   onTap: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => LoginScreen()),
-                    );
+                    Navigator.pushReplacementNamed(context, RouteNames.login);
                   },
                   child: const Text(
                     "Log In",

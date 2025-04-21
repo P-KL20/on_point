@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../routes.dart';
 
 class ResetConfirmationScreen extends StatelessWidget {
   @override
@@ -31,7 +32,12 @@ class ResetConfirmationScreen extends StatelessWidget {
               ),
               const SizedBox(height: 30),
               ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed:
+                    () => Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      RouteNames.login,
+                      (route) => false,
+                    ),
                 child: const Text("Back to Login"),
               ),
             ],

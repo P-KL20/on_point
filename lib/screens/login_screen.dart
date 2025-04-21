@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
-import 'home_screen.dart';
+import '../routes.dart';
+import '../utils/dialog_helper.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final AuthService _authService = AuthService();
 
-  //Login Method
   void _login(BuildContext context) async {
     User? user = await _authService.loginWithEmailOrUsername(
       emailController.text.trim(),
@@ -17,59 +17,57 @@ class LoginScreen extends StatelessWidget {
     );
 
     if (user != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen(user: user)),
-      );
+      Navigator.pushReplacementNamed(context, RouteNames.home, arguments: user);
     } else {
-      showDialog(
-        context: context,
-        builder:
-            (_) => AlertDialog(
-              title: Text("Login Error"),
-              content: Text("Invalid email/username or password."),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("OK"),
-                ),
-              ],
-            ),
-      );
+      DialogHelper.showError(context, "Invalid email/username or password.");
     }
   }
 
-  //Reset Password Method
-  void _resetPassword(BuildContext context) async {
-    final email = emailController.text.trim();
+  void _showResetDialog(BuildContext context) {
+    final TextEditingController emailResetController = TextEditingController();
 
-    if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please enter your email to reset password.")),
-      );
-      return;
-    }
-
-    bool success = await _authService.resetPassword(email);
-
-    if (success) {
-      Navigator.pushNamed(context, '/reset-confirmation');
-    } else {
-      showDialog(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: Text("Error"),
-              content: Text("Failed to send password reset email."),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("OK"),
-                ),
-              ],
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text("Reset Password"),
+            content: TextField(
+              controller: emailResetController,
+              decoration: InputDecoration(
+                labelText: "Email",
+                hintText: "Enter your registered email",
+              ),
             ),
-      );
-    }
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  final email = emailResetController.text.trim();
+                  if (!email.contains("@")) {
+                    Navigator.pop(context);
+                    DialogHelper.showError(context, "Invalid email address.");
+                    return;
+                  }
+
+                  final success = await _authService.resetPassword(email);
+                  Navigator.pop(context);
+                  if (success) {
+                    Navigator.pushNamed(context, RouteNames.resetConfirmation);
+                  } else {
+                    DialogHelper.showError(
+                      context,
+                      "Failed to send reset email.",
+                    );
+                  }
+                },
+                child: Text("Send"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Cancel"),
+              ),
+            ],
+          ),
+    );
   }
 
   @override
@@ -121,7 +119,7 @@ class LoginScreen extends StatelessWidget {
                         TextField(
                           controller: emailController,
                           decoration: InputDecoration(
-                            labelText: "Username",
+                            labelText: "Username or Email",
                             labelStyle: const TextStyle(
                               fontStyle: FontStyle.italic,
                             ),
@@ -178,7 +176,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 15),
                   GestureDetector(
-                    onTap: () => _resetPassword(context),
+                    onTap: () => _showResetDialog(context),
                     child: Text(
                       "Forgot your password?",
                       style: TextStyle(
@@ -187,7 +185,6 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
