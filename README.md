@@ -32,12 +32,6 @@ OnPoint is a mobile app designed to help users take control of their personal fi
 
 ---
 
-## 📂 Folder Structure
-
-lib/ ├── models/ # Data models (e.g., OverspentAlert) ├── screens/ # UI screens (Login, Home, Budget, etc.) │ ├── login_screen.dart │ ├── signup_screen.dart │ ├── home_screen.dart │ ├── budget_input_screen.dart │ ├── transaction_history_screen.dart │ ├── budget_overview_screen.dart │ ├── create_budget_screen.dart │ ├── notification_history_screen.dart │ └── settings_screen.dart ├── services/ # Firestore and logic layer │ ├── auth_service.dart │ ├── budget_service.dart │ ├── transaction_service.dart │ ├── notification_service.dart │ ├── firestore_service.dart │ ├── home_service.dart │ └── logger_service.dart ├── utils/ # Utility components │ └── dialog_helper.dart ├── routes.dart # Centralized route definitions └── main.dart # App entry point
-
----
-
 ## 📸 Screenshots (Coming Soon)
 
 - ✅ Login & Sign Up
