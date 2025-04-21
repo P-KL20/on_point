@@ -1,4 +1,4 @@
-# 📱 OnPoint – Personal Finance Manager (iOS)
+# 📱 OnPoint – Personal Finance App (iOS)
 
 OnPoint is a mobile app designed to help users take control of their personal finances with ease. Built using **Flutter** and backed by **Firebase**, this app enables users to track income, expenses, and subscriptions, set monthly budgets, visualize spending trends, and receive smart notifications for overspending.
 
