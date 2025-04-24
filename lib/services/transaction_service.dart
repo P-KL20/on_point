@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'firestore_service.dart';
+import 'package:uuid/uuid.dart';
+import 'package:flutter/foundation.dart';
 
 /// This is a service class for managing transactions in a Flutter app.
 /// It provides methods to filter transactions, calculate summaries,
@@ -18,6 +20,10 @@ import 'firestore_service.dart';
 /// and calculating account balances.
 class TransactionService {
   final FirestoreService _firestoreService = FirestoreService();
+  final _uuid = Uuid();
+  final ValueNotifier<String?> highlightedTransferId = ValueNotifier<String?>(
+    null,
+  );
 
   /// Filters a list of documents by selected bank and optional category
   List<QueryDocumentSnapshot> filterTransactions(
@@ -116,16 +122,30 @@ class TransactionService {
         final fromKey = '$transferFromBank - $accountType';
         final balances = await _firestoreService.calculateAccountBalances();
         final currentBalance = balances[fromKey] ?? 0;
+        final transferId = _uuid.v4();
         if (!isCredit && currentBalance < amount) {
           return "Insufficient funds in $fromKey.";
         }
+        // 1. Deduct from "from" bank
         await _firestoreService.addTransaction(
-          transactionType: transactionType,
+          transactionType: 'Transfer Out',
           accountType: accountType,
-          bank: '$transferFromBank → $transferToBank',
+          bank: transferFromBank,
+          amount: -amount,
+          date: date,
+          comment: 'Transferred to $transferToBank. $comment',
+          transferId: transferId,
+        );
+
+        // 2. Add to "to" bank
+        await _firestoreService.addTransaction(
+          transactionType: 'Transfer In',
+          accountType: accountType,
+          bank: transferToBank,
           amount: amount,
           date: date,
-          comment: comment.trim(),
+          comment: 'Received from $transferFromBank. $comment',
+          transferId: transferId,
         );
       } else {
         if (selectedBank == null) return "Please select a bank.";
@@ -151,6 +171,14 @@ class TransactionService {
       return null;
     } catch (e) {
       return "Error saving data: $e";
+    }
+  }
+
+  void toggleHighlight(String? transferId) {
+    if (highlightedTransferId.value == transferId) {
+      highlightedTransferId.value = null;
+    } else {
+      highlightedTransferId.value = transferId;
     }
   }
 }

@@ -18,6 +18,10 @@ import 'routes.dart';
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
+/// Route observer for tracking navigation events
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
+
 /// This is the main entry point of the application
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +54,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorObservers: [routeObserver],
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         dialogTheme: DialogTheme(

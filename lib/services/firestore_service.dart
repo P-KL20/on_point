@@ -29,6 +29,7 @@ class FirestoreService {
     required DateTime date,
     String? comment,
     String? category,
+    String? transferId,
   }) async {
     await _db.collection('users').doc(uid).collection('transactions').add({
       'transactionType': transactionType,
@@ -39,6 +40,7 @@ class FirestoreService {
       'comment': comment ?? '',
       'category': category ?? 'Uncategorized',
       'createdAt': DateTime.now().toIso8601String(),
+      if (transferId != null) 'transferId': transferId,
     });
   }
 
@@ -54,33 +56,22 @@ class FirestoreService {
       final double amount = (data['amount'] ?? 0).toDouble();
       final String accountType = data['accountType'];
       final String bank = data['bank'];
+      final String key = '$bank - $accountType';
 
-      if (transactionType == 'Transfer' && bank.contains('→')) {
-        final parts = bank.split('→');
-        if (parts.length == 2) {
-          final from = parts[0].trim();
-          final to = parts[1].trim();
-          final fromKey = '$from - $accountType';
-          final toKey = '$to - $accountType';
-          balances[fromKey] = (balances[fromKey] ?? 0) - amount;
-          balances[toKey] = (balances[toKey] ?? 0) + amount;
-        }
-      } else {
-        final key = '$bank - $accountType';
-
-        switch (transactionType) {
-          case 'Deposit':
-          case 'Income':
-            balances[key] = (balances[key] ?? 0) + amount;
-            break;
-          case 'Withdrawal':
-          case 'Expense':
-          case 'Bill Payment':
-          case 'Purchase':
-          case 'Subscription':
-            balances[key] = (balances[key] ?? 0) - amount;
-            break;
-        }
+      switch (transactionType) {
+        case 'Deposit':
+        case 'Income':
+        case 'Transfer In':
+          balances[key] = (balances[key] ?? 0) + amount;
+          break;
+        case 'Withdrawal':
+        case 'Expense':
+        case 'Bill Payment':
+        case 'Purchase':
+        case 'Subscription':
+        case 'Transfer Out':
+          balances[key] = (balances[key] ?? 0) - amount;
+          break;
       }
     }
 
@@ -312,7 +303,7 @@ class FirestoreService {
         .collection('users')
         .doc(uid)
         .collection('transactions')
-        .orderBy('date', descending: true)
+        .orderBy('createdAt', descending: true)
         .snapshots();
   }
 

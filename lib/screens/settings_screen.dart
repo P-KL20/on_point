@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../routes.dart';
 import '../utils/dialog_helper.dart';
 
-/// A screen that displays the settings and user profile information.
-/// It allows the user to log out and view their profile information.
+/// A screen for user settings, including logout and account deletion.
+/// It displays the user's profile information and provides options
+/// to log out or delete the account.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -20,6 +22,43 @@ class SettingsScreen extends StatelessWidget {
           RouteNames.login,
           (route) => false,
         );
+      },
+    );
+  }
+
+  /// Shows a confirmation dialog for account deletion.
+  void _confirmDeleteAccount(BuildContext context) {
+    DialogHelper.showConfirmation(
+      context: context,
+      title: 'Delete Account',
+      message:
+          'This will permanently delete your account and all your data. Are you sure?',
+      confirmText: 'Delete',
+      onConfirmed: () async {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) return;
+
+        final uid = user.uid;
+
+        try {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .delete();
+
+          await user.delete();
+
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            RouteNames.login,
+            (_) => false,
+          );
+        } catch (e) {
+          DialogHelper.showError(
+            context,
+            "Account deletion failed. Please re-authenticate and try again.",
+          );
+        }
       },
     );
   }
@@ -43,7 +82,7 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Profile info
+          // Profile Info
           Container(
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
             decoration: BoxDecoration(
@@ -92,28 +131,24 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Logout
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ListTile(
-              leading: const Icon(Icons.logout, color: Colors.redAccent),
-              title: const Text('Log Out'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () => _confirmLogout(context),
-            ),
+          _buildTile(
+            icon: Icons.logout,
+            label: 'Log Out',
+            iconColor: Colors.redAccent,
+            onTap: () => _confirmLogout(context),
+          ),
+          const SizedBox(height: 16),
+
+          // Delete Account
+          _buildTile(
+            icon: Icons.delete_forever,
+            label: 'Delete Account',
+            iconColor: Colors.red,
+            onTap: () => _confirmDeleteAccount(context),
           ),
           const SizedBox(height: 24),
 
-          // Placeholder for future personalization settings
+          // Placeholder
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -126,6 +161,34 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // Helper widget for consistency
+  Widget _buildTile({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color iconColor = Colors.black,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: iconColor),
+        title: Text(label),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: onTap,
       ),
     );
   }

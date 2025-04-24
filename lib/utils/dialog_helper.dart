@@ -41,8 +41,8 @@ class DialogHelper {
   }
 
   /// Shows a styled success dialog with green checkmark
-  static void showSuccess(BuildContext context, String message) {
-    showDialog(
+  static Future<void> showSuccess(BuildContext context, String message) {
+    return showDialog(
       context: context,
       builder:
           (_) => AlertDialog(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/dialog_helper.dart';
 import '../services/firestore_service.dart';
 import '../services/transaction_service.dart';
@@ -193,11 +194,24 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          ...entry.value.map(
-                            (doc) => _transactionCard(
-                              doc.data() as Map<String, dynamic>,
-                              doc.id,
-                            ),
+                          ValueListenableBuilder<String?>(
+                            valueListenable:
+                                _transactionService.highlightedTransferId,
+                            builder: (context, highlightedId, _) {
+                              return Column(
+                                children:
+                                    entry.value
+                                        .map(
+                                          (doc) => _transactionCard(
+                                            doc.data() as Map<String, dynamic>,
+                                            doc.id,
+                                            highlightedId,
+                                            _transactionService.toggleHighlight,
+                                          ),
+                                        )
+                                        .toList(),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -270,80 +284,166 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   );
 
   /// A helper method to create a row with two text widgets.
-  Widget _buildRow(String left, String right) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Expanded(
-        child: Text(
-          left,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+  Widget _buildRow(
+    String left,
+    String right, {
+    bool isExpense = false,
+    bool isIncome = false,
+  }) {
+    Color? amountColor;
+    if (isExpense) amountColor = Colors.red[700];
+    if (isIncome) amountColor = Colors.green[700];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            left,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
         ),
-      ),
-      if (right.isNotEmpty)
-        Text(
-          right,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-    ],
-  );
+        if (right.isNotEmpty)
+          Text(
+            right,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: amountColor,
+            ),
+          ),
+      ],
+    );
+  }
 
   /// Builds a transaction card with details and action buttons.
-  Widget _transactionCard(Map<String, dynamic> data, String docId) => Padding(
-    padding: const EdgeInsets.only(top: 8.0),
-    child: Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildRow('💸 ${data['transactionType']}', '\$${data['amount']}'),
-          const SizedBox(height: 4),
-          _buildRow('🏦 ${data['bank']} - ${data['accountType']}', ''),
-          const SizedBox(height: 4),
-          _buildRow('🗓️ ${data['date'].split("T")[0]}', ''),
-          if ((data['comment'] ?? '').toString().isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                '📝 ${data['comment']}',
-                style: const TextStyle(fontStyle: FontStyle.italic),
-              ),
-            ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+  Widget _transactionCard(
+    Map<String, dynamic> data,
+    String docId,
+    String? highlightedId,
+    void Function(String? transferId) onTapTransfer,
+  ) {
+    final isHighlighted =
+        data['transferId'] != null && data['transferId'] == highlightedId;
+    final isExpense = [
+      'Withdrawal',
+      'Expense',
+      'Purchase',
+      'Bill Payment',
+      'Subscription',
+      'Transfer Out',
+    ].contains(data['transactionType']);
+    final isIncome = [
+      'Income',
+      'Deposit',
+      'Transfer In',
+    ].contains(data['transactionType']);
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: GestureDetector(
+        onTap: () {
+          final transferId = data['transferId'];
+          if (transferId != null) {
+            onTapTransfer(transferId);
+          }
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: isHighlighted ? Colors.yellow[100] : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextButton(
-                onPressed: () => _showDeleteDialog(docId),
-                child: const Text(
-                  'Delete',
-                  style: TextStyle(color: Colors.red),
-                ),
+              _buildRow(
+                '💸 ${data['transactionType']}',
+                '\$${data['amount']}',
+                isExpense: isExpense,
+                isIncome: isIncome,
               ),
-              TextButton(
-                onPressed: () => _showEditDialog(data, docId),
-                child: const Text('Edit'),
+              const SizedBox(height: 4),
+              _buildRow('🏦 ${data['bank']} - ${data['accountType']}', ''),
+              const SizedBox(height: 4),
+              _buildRow('🗓️ ${data['date'].split("T")[0]}', ''),
+              if (data['transferId'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.link, size: 16, color: Colors.blueGrey),
+                      SizedBox(width: 4),
+                      Text(
+                        'Linked Transfer',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.blueGrey,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if ((data['comment'] ?? '').toString().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    '📝 ${data['comment']}',
+                    style: const TextStyle(fontStyle: FontStyle.italic),
+                  ),
+                ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed:
+                        () => _showDeleteDialog(docId, data['transferId']),
+                    child: const Text(
+                      'Delete',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => _showEditDialog(data, docId),
+                    child: const Text('Edit'),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 
   /// Shows a confirmation dialog for deleting a transaction.
-  void _showDeleteDialog(String docId) {
+  void _showDeleteDialog(String docId, String? transferId) {
     DialogHelper.showConfirmation(
       context: context,
       title: 'Delete Transaction',
-      message: 'Are you sure you want to delete this transaction?',
+      message:
+          transferId != null
+              ? 'This is part of a linked transfer. Delete both transactions?'
+              : 'Are you sure you want to delete this transaction?',
       confirmText: 'Delete',
-      cancelText: 'Cancel',
       onConfirmed: () async {
-        await _firestoreService.deleteTransaction(docId);
+        if (transferId != null) {
+          // 🔁 Delete both
+          final snapshot =
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseAuth.instance.currentUser!.uid)
+                  .collection('transactions')
+                  .where('transferId', isEqualTo: transferId)
+                  .get();
+
+          for (var doc in snapshot.docs) {
+            await _firestoreService.deleteTransaction(doc.id);
+          }
+        } else {
+          await _firestoreService.deleteTransaction(docId);
+        }
       },
     );
   }

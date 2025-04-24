@@ -21,7 +21,12 @@ class LoginScreen extends StatelessWidget {
     );
 
     if (user != null) {
-      Navigator.pushReplacementNamed(context, RouteNames.home, arguments: user);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        RouteNames.home,
+        (route) => false,
+        arguments: user,
+      );
     } else {
       DialogHelper.showError(context, "Invalid email/username or password.");
     }

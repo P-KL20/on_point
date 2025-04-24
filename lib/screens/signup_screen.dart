@@ -16,15 +16,40 @@ class SignupScreen extends StatelessWidget {
 
   // This method is called when the user taps the sign-up button
   void _signUp(BuildContext context) async {
-    User? user = await _authService.signUpWithEmail(
-      emailController.text.trim(),
-      passwordController.text.trim(),
-      usernameController.text.trim(), // Pass username
-    );
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+    final username = usernameController.text.trim();
+
+    if (!email.contains("@") || !email.contains(".")) {
+      DialogHelper.showError(context, "Please enter a valid email address.");
+      return;
+    }
+
+    if (username.length < 4) {
+      DialogHelper.showError(
+        context,
+        "Username must be at least 4 characters.",
+      );
+      return;
+    }
+
+    if (password.length < 6 || !RegExp(r'[A-Z]').hasMatch(password)) {
+      DialogHelper.showError(
+        context,
+        "Password must be at least 6 characters and contain an uppercase letter.",
+      );
+      return;
+    }
+
+    User? user = await _authService.signUpWithEmail(email, password, username);
 
     if (user != null) {
-      DialogHelper.showSuccess(context, "Account created successfully!");
-      Navigator.pushReplacementNamed(context, RouteNames.login);
+      await DialogHelper.showSuccess(context, "Account created successfully!");
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        RouteNames.login,
+        (_) => false,
+      );
     } else {
       DialogHelper.showError(context, "Failed to create an account.");
     }
