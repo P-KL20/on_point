@@ -148,14 +148,6 @@ class _BudgetOverviewScreenState extends State<BudgetOverviewScreen>
                       const Text('No budget set. Please create one.')
                     else ...[
                       const SizedBox(height: 8),
-                      if (DateTime.parse('$selectedMonth-01').isAfter(
-                            DateTime(DateTime.now().year, DateTime.now().month),
-                          ) &&
-                          hasBudget)
-                        const Text(
-                          'This is not a locked budget.',
-                          style: TextStyle(color: Colors.orange),
-                        ),
                       if (isCurrentMonth) const RolloverBanner(),
                       const SizedBox(height: 8),
                       TopCategoryCard(spentData: spentData),

@@ -276,9 +276,6 @@ class DeleteBudgetButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       onPressed: () async {
-        // Store a valid context before awaiting
-        final scaffoldContext = context;
-
         final confirm = await showDialog<bool>(
           context: context,
           builder:
@@ -305,11 +302,12 @@ class DeleteBudgetButton extends StatelessWidget {
 
           await FirestoreService().deleteBudgetByMonth(year, month);
 
-          ScaffoldMessenger.of(
-            scaffoldContext,
-          ).showSnackBar(const SnackBar(content: Text('Budget deleted')));
-
-          onDelete();
+          if (context.mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Budget deleted')));
+            onDelete();
+          }
         }
       },
     );
@@ -521,8 +519,7 @@ class CategoryProgressCard extends StatelessWidget {
             final spent = spentData[category] ?? 0;
             final percent = (spent / limit).clamp(0.0, 1.0);
             final overLimit = spent > limit;
-            final categoryPercent =
-                spent / (budgetData.values.fold(0.0, (a, b) => a + b)) * 100;
+            final categoryPercent = (spent / limit * 100).clamp(0, 999);
 
             return Card(
               elevation: 4,
